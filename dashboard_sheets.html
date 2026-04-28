@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard ISSIs DCX</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+
+/* ── TOKENS ── */
+:root{
+  --bg:#0d0f14;--surface:#161a24;--surface2:#1e2330;--border:#2a3045;
+  --accent:#00c6ff;--accent2:#f59e0b;--accent3:#10b981;
+  --text:#e2e8f0;--muted:#64748b;
+  --h0:#161a24;--h1:#1a3a5c;--h2:#1d5f8a;--h3:#1e86bd;--h4:#00c6ff;--h5:#f59e0b;
+}
+body.theme-white{--bg:#f0f2f5;--surface:#fff;--surface2:#e8ecf0;--border:#d0d7de;--accent:#0969da;--accent2:#bf8700;--accent3:#1a7f37;--text:#1f2328;--muted:#656d76;--h0:#e8ecf0;--h1:#cbe1f4;--h2:#79c0ff;--h3:#388bfd;--h4:#0969da;--h5:#bf8700;}
+body.theme-blue{--bg:#0a1628;--surface:#0d1f3c;--surface2:#152845;--border:#1e3a5f;--accent:#4fc3f7;--accent2:#ffd54f;--accent3:#69f0ae;--text:#e3f2fd;--muted:#5b8db8;--h0:#0d1f3c;--h1:#1a3a6e;--h2:#1565c0;--h3:#1976d2;--h4:#4fc3f7;--h5:#ffd54f;}
+body.theme-red{--bg:#1a0505;--surface:#2d0a0a;--surface2:#3d1010;--border:#5c1f1f;--accent:#ff6b6b;--accent2:#ffd93d;--accent3:#6bcb77;--text:#ffe5e5;--muted:#8a5555;--h0:#2d0a0a;--h1:#5c1a1a;--h2:#8b1a1a;--h3:#c0392b;--h4:#ff6b6b;--h5:#ffd93d;}
+body.theme-green{--bg:#051a0a;--surface:#0a2d12;--surface2:#0f3d18;--border:#1a5c28;--accent:#4ade80;--accent2:#fbbf24;--accent3:#34d399;--text:#dcfce7;--muted:#4d8560;--h0:#0a2d12;--h1:#14532d;--h2:#166534;--h3:#16a34a;--h4:#4ade80;--h5:#fbbf24;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;display:flex;flex-direction:column;height:100vh;}
+
+/* ══════════════════════════════
+   HEADER — duas linhas
+══════════════════════════════ */
+header{
+  flex-shrink:0;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  padding:6px 14px 5px;
+  gap:5px;
+}
+
+/* Linha 1: logo + título + botões modo + layout + tema */
+.hrow1{
+  display:flex;align-items:center;gap:8px;
+  min-height:0;
+}
+.logo{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),#0070ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+h1{font-size:.92rem;font-weight:700;letter-spacing:-.3px;flex-shrink:0;white-space:nowrap;}
+h1 span{color:var(--accent);}
+.h-sep{width:1px;background:var(--border);height:22px;flex-shrink:0;align-self:center;}
+
+/* Stats 4 itens — UMA linha */
+.header-stats{display:flex;gap:4px;flex-shrink:0;}
+.hstat{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 8px;min-width:56px;}
+.hstat-label{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.hstat-value{font-size:.78rem;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--accent);white-space:nowrap;line-height:1.2;}
+
+/* Botões de ação no canto direito */
+.hrow1-right{display:flex;gap:5px;margin-left:auto;flex-shrink:0;align-items:center;}
+.hbtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:.65rem;font-family:'IBM Plex Sans',sans-serif;transition:all .12s;white-space:nowrap;}
+.hbtn:hover{border-color:var(--accent);color:var(--text);}
+.hbtn.active{background:rgba(0,198,255,.12);border-color:var(--accent);color:var(--accent);}
+.hbtn.edit-active{border-color:var(--accent2);color:var(--accent2);background:rgba(245,158,11,.1);}
+
+/* Linha 2: equipamentos em 2 linhas (grid flow column) */
+.hrow2{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-height:0;
+}
+.equip-section{
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+}
+/* Grid de equipamentos — 2 linhas, colunas automáticas */
+.equip-grid{
+  display:grid;
+  grid-auto-flow:column;
+  grid-template-rows:repeat(2,auto);
+  gap:3px;
+  width:100%;
+}
+.equip-btn{
+  display:flex;flex-direction:column;align-items:center;
+  background:transparent;border:1px solid transparent;
+  border-radius:5px;padding:2px 5px;cursor:pointer;
+  transition:all .12s;color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;
+  min-width:0;
+}
+.equip-btn:hover{background:var(--surface2);border-color:var(--border);}
+.equip-btn.active{background:rgba(0,198,255,.1);border-color:var(--accent);}
+.btn-selos{font-size:.65rem;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--accent);display:block;line-height:1.1;white-space:nowrap;}
+.btn-name{font-size:.5rem;color:var(--muted);display:block;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54px;}
+.all-btn .btn-selos{color:var(--accent2);font-size:.68rem;}
+.all-btn .btn-name{font-size:.5rem;}
+
+/* Group chips row2 */
+.group-row{display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
+.group-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:1px 6px;border-radius:8px;font-size:.56rem;cursor:pointer;transition:all .12s;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.group-chip:hover{border-color:var(--accent3);color:var(--accent3);}
+.group-chip.active{background:rgba(16,185,129,.15);border-color:var(--accent3);color:var(--accent3);}
+
+/* ── PALETTE DROPDOWN ── */
+.palette-wrap{position:relative;}
+.palette-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px;display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5);min-width:148px;}
+.palette-dropdown.open{display:block;}
+.palette-title{font-size:.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:7px;}
+.theme-options{display:flex;flex-direction:column;gap:3px;}
+.theme-opt{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all .12s;}
+.theme-opt:hover{background:var(--surface2);border-color:var(--border);}
+.theme-opt.active{border-color:var(--accent);background:rgba(0,198,255,.08);}
+.theme-swatch{width:26px;height:14px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.1);}
+.theme-name{font-size:.65rem;color:var(--text);font-family:'IBM Plex Mono',monospace;}
+
+/* ══════════════════════════════
+   MAIN — sem scroll
+══════════════════════════════ */
+.app-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+.main{
+  flex:1;overflow:hidden;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  min-height:0;
+}
+
+/* Edit banner */
+.edit-banner{display:none;align-items:center;gap:8px;background:rgba(245,158,11,.12);border:1px solid var(--accent2);border-radius:6px;padding:5px 12px;font-size:.66rem;font-family:'IBM Plex Mono',monospace;color:var(--accent2);flex-shrink:0;}
+.edit-banner.show{display:flex;}
+
+/* Date badge */
+.date-badge{display:none;align-items:center;gap:6px;background:rgba(0,198,255,.08);border:1px solid var(--accent);border-radius:6px;padding:3px 10px;font-size:.65rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);flex-shrink:0;}
+.date-badge.show{display:flex;}
+.clear-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 2px;}
+.clear-btn:hover{color:var(--text);}
+
+/* ══════════════════════════════
+   PANELS
+══════════════════════════════ */
+.panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:9px 11px;position:relative;transition:box-shadow .2s;
+  flex-shrink:0;
+}
+.panel.flex-grow{flex:1;min-height:0;display:flex;flex-direction:column;}
+.panel-title{font-size:.58rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:7px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.panel-title::before{content:'';display:block;width:3px;height:9px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+.drag-handle{display:none;position:absolute;top:6px;right:8px;background:var(--accent2);color:#000;border-radius:3px;padding:1px 5px;font-size:.54rem;font-family:'IBM Plex Mono',monospace;cursor:grab;z-index:10;user-select:none;}
+.edit-mode .panel .drag-handle{display:block;}
+.edit-mode .panel{cursor:grab;border-style:dashed;}
+.edit-mode .panel:hover{box-shadow:0 0 0 2px var(--accent2);}
+.panel.dragging{opacity:.45;}
+.panel.drag-over{box-shadow:0 0 0 2px var(--accent2);background:rgba(245,158,11,.05);}
+
+/* ══════════════════════════════
+   CALENDAR
+══════════════════════════════ */
+.calendar-container{display:flex;gap:10px;flex-wrap:wrap;}
+.month-block{flex:0 0 auto;}
+.month-title{font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,26px);gap:2px;}
+.cal-dow{font-size:.48rem;color:var(--muted);text-align:center;font-family:'IBM Plex Mono',monospace;padding-bottom:2px;}
+.cal-day{width:26px;height:26px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.54rem;font-family:'IBM Plex Mono',monospace;border:1px solid transparent;position:relative;}
+.cal-day.empty{background:transparent;}
+.cal-day.no-data{background:var(--h0);color:var(--muted);}
+.cal-day.has-data{color:var(--text);cursor:pointer;}
+.cal-day.has-data:hover{border-color:var(--accent);transform:scale(1.1);z-index:5;}
+.cal-day.selected{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(0,198,255,.3);}
+.cal-count{font-size:.4rem;opacity:.85;}
+
+/* ══════════════════════════════
+   CHART — barra vertical + clicável
+══════════════════════════════ */
+.chart-wrap{
+  flex:1;min-height:0;
+  display:flex;flex-direction:column;
+  gap:4px;
+}
+.chart-area{
+  flex:1;min-height:0;
+  display:flex;
+  position:relative;
+}
+/* Y-axis labels */
+.y-labels{
+  width:28px;flex-shrink:0;
+  display:flex;flex-direction:column;justify-content:space-between;
+  pointer-events:none;
+  padding-bottom:20px;
+}
+.y-lbl{font-size:.44rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1;text-align:right;padding-right:4px;}
+
+/* Grid lines + bars container */
+.chart-inner{
+  flex:1;min-height:0;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+.bars-area{
+  flex:1;min-height:0;
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+}
+.labels-row{
+  height:20px;flex-shrink:0;
+  display:flex;
+  gap:2px;
+}
+.grid-line{
+  position:absolute;left:0;right:0;
+  border-top:1px dashed var(--border);
+  pointer-events:none;
+}
+
+.bar-col{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+  position:relative;
+  height:100%;
+  justify-content:flex-end;
+}
+.bar{
+  width:100%;border-radius:3px 3px 0 0;
+  transition:height .3s ease;
+}
+.bar:hover{filter:brightness(1.2);}
+.bar-lbl{
+  flex:1;
+  font-size:.46rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap; text-align:center;
+  display:flex;align-items:center;justify-content:center;
+}
+.bar-val{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  font-size:.42rem;color:var(--text);font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap;opacity:0;transition:opacity .15s; pointer-events:none;
+}
+.bar-col:hover .bar-val{opacity:1;}
+
+/* Peak badge */
+.peak-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:2px 9px;font-size:.62rem;font-family:'IBM Plex Mono',monospace;color:var(--accent2);flex-shrink:0;}
+
+/* ── TOOLTIP / POPUP ── */
+.chart-popup{
+  position:fixed;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;font-size:.68rem;font-family:'IBM Plex Mono',monospace;
+  z-index:1000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.6);
+  min-width:180px;max-width:260px;max-height:260px;overflow-y:auto;
+}
+.chart-popup.show{display:block;}
+.popup-title{color:var(--accent);font-weight:600;margin-bottom:5px;font-size:.72rem;}
+.popup-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid var(--border);}
+.popup-row:last-child{border-bottom:none;}
+.popup-key{color:var(--text);}
+.popup-val{color:var(--accent2);font-weight:600;}
+
+.tooltip-tip{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:.65rem;font-family:'IBM Plex Mono',monospace;pointer-events:none;z-index:1001;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);}
+.tooltip-tip strong{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <!-- LINHA 1: logo, título, stats, botões -->
+  <div class="hrow1">
+    <div class="logo">📡</div>
+    <h1>Dashboard <span>ISSIs DCX</span></h1>
+    <div class="h-sep"></div>
+    <div class="header-stats">
+      <div class="hstat"><span class="hstat-label">Eventos</span><span class="hstat-value" id="statTotal">—</span></div>
+      <div class="hstat"><span class="hstat-label">Dias Ativos</span><span class="hstat-value" id="statDays">—</span></div>
+      <div class="hstat"><span class="hstat-label">Hora Pico</span><span class="hstat-value" id="statPeak">—</span></div>
+      <div class="hstat"><span class="hstat-label">Período</span><span class="hstat-value" id="statRange" style="font-size:.6rem">—</span></div>
+    </div>
+    <div class="hrow1-right">
+      <button class="hbtn active" id="btnModeIssi" onclick="setMode('issi',this)">📻 Equip.</button>
+      <button class="hbtn" id="btnModeGroup" onclick="setMode('group',this)">👥 Grupos</button>
+      <button class="hbtn" id="layoutBtn" onclick="toggleEditMode()">✏️ Layout</button>
+      <button class="hbtn" id="themeToggleBtn" onclick="toggleTheme()">☀️ White</button>
+    </div>
+  </div>
+
+  <!-- LINHA 2: equipamentos 2 linhas + grupos -->
+  <div class="hrow2">
+    <div class="equip-section">
+      <div class="equip-grid" id="headerEquips"></div>
+    </div>
+    <div class="group-row" id="groupFilterWrap" style="display:none">
+      <div id="groupChips"></div>
+    </div>
+  </div>
+</header>
+
+<div class="app-body">
+  <main class="main" id="mainArea">
+
+    <div class="edit-banner" id="editBanner">
+      ✏️ Modo edição — arraste os painéis para reorganizar
+      <button class="clear-btn" onclick="toggleEditMode()">✓ Concluir</button>
+    </div>
+
+    <div class="date-badge" id="dateBadge">
+      <span>📅 <span id="badgeDate">—</span></span>
+      <button class="clear-btn" onclick="clearDate()">✕</button>
+    </div>
+
+    <!-- CALENDÁRIO -->
+    <div class="panel" id="panelCal">
+      <div class="drag-handle">⠿ mover</div>
+      <div class="panel-title">Calendário de Uso — clique em um dia para filtrar</div>
+      <div class="calendar-container" id="calContainer"></div>
+    </div>
+
+    <!-- GRÁFICO 24H -->
+    <div class="panel flex-grow" id="panelBar">
+      <div class="drag-handle">⠿ mover</div>
+      <div class="panel-title" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:5px"><span style="display:block;width:3px;height:9px;background:var(--accent);border-radius:2px"></span><span id="chartTitle">Linha do Tempo 24h — clique em uma hora para detalhar</span></span>
+        <span id="peakInfo"></span>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-area">
+          <div class="y-labels" id="yLabels"></div>
+          <div class="chart-inner" id="chartInner">
+            <div class="bars-area" id="barsArea"></div>
+            <div class="labels-row" id="labelsRow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Popup de detalhes ao clicar na barra -->
+<div class="chart-popup" id="chartPopup"></div>
+<div class="tooltip-tip" id="tooltipTip"></div>
+
+<script>
+// ── CONFIG SHEETS ──
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxsJHBn1KfyDdZKQzhm91zzbH8VsUf8V379X3EZ4uwpeAGvbnI6io3mvO00qtj12V-IBQ/exec';
+const SHEET_ABA   = 'DCX';
+
+// ── MAPA ISSI → SELOS/SERIAL (mantido do original) ──
+const ISSI_META = {
+  "10210047":{"selos":"490171","serial":"111TRU0289"},
+  "10210053":{"selos":"205769","serial":"111TNL0566"},
+  "10210056":{"selos":"493520","serial":"111TRU0626"},
+  "10210059":{"selos":"490380","serial":"111TRU0335"},
+  "10210066":{"selos":"490330","serial":"111TRU0295"},
+  "10210075":{"selos":"490460","serial":"111TRU0341"},
+  "10210082":{"selos":"490221","serial":"111TRU0403"},
+  "10210093":{"selos":"205704","serial":"111TMY0880"},
+  "10210144":{"selos":"493634","serial":"111TRU0546"},
+  "10210147":{"selos":"490364","serial":"111TRU0221"},
+  "10210150":{"selos":"493512","serial":"111TRU0586"},
+  "10210151":{"selos":"490370","serial":"111TRU0393"},
+  "10210152":{"selos":"493746","serial":"111TRU0711"},
+  "10210159":{"selos":"490109","serial":"111TRU0444"},
+  "10210170":{"selos":"493638","serial":"111TRU0673"},
+  "10210229":{"selos":"490177","serial":"111TRU0360"},
+  "10210305":{"selos":"205732","serial":"111TNL0691"},
+  "10210307":{"selos":"205719","serial":"111TNL0698"},
+  "10210310":{"selos":"205777","serial":"111TMY2279"},
+  "10210312":{"selos":"205782","serial":"111TNL0590"},
+  "10210439":{"selos":"490540","serial":"111TRU0225"}
+};
+
+const USER_MAP = {
+  "205685":"VERIFICAR","490171":"Almir Dias","493638":"Bryan Reis",
+  "205769":"Clayton V.","493634":"Daniel T.","493520":"Eberson J.",
+  "490364":"Daniel Th.","490380":"Fabio M.","205732":"Gabriel A.",
+  "205704":"Jair R.","490540":"Renato L.","205782":"João Paulo",
+  "490330":"José D.","493512":"Josemar R.","490221":"Isaias F.",
+  "493746":"Thiago L.","493426":"Luciano G.","490177":"Isaias F.",
+  "490370":"Mirella C.","205777":"Natalia A.","490460":"Nycolas A.",
+  "490109":"VERIFICAR","205719":"Rafael S.","490231":"Thiago L."
+};
+
+// ── STATE ──
+
+let currentData = {};
+let selectedISS  = 'ALL';
+let selectedDate = 'ALL';
+let selectedGroup = 'ALL';
+let activeEquipBtn = null;
+let isEditMode = false;
+let dragSrc = null;
+
+// ── THEME ──
+let currentTheme = localStorage.getItem('dcx_theme') || 'dark';
+function toggleTheme() {
+  const newTheme = currentTheme === 'dark' ? 'white' : 'dark';
+  currentTheme = newTheme;
+  localStorage.setItem('dcx_theme', newTheme);
+  document.body.className = document.body.className.replace(/theme-\w+/g,'').trim();
+  if (newTheme !== 'dark') document.body.classList.add('theme-' + newTheme);
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) btn.textContent = newTheme === 'dark' ? '☀️ White' : '🌙 Dark';
+  render();
+}
+(function(){
+  if (currentTheme !== 'dark') document.body.classList.add('theme-' + currentTheme);
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) btn.textContent = currentTheme === 'dark' ? '☀️ White' : '🌙 Dark';
+})();
+
+// ── MODE ──
+function setMode(mode, btn) {
+  currentMode = mode;
+  currentData = mode === 'issi' ? DATA_ISSI_RAW : DATA_RADIOS_RAW;
+  selectedISS = 'ALL'; selectedDate = 'ALL'; selectedGroup = 'ALL';
+  document.querySelectorAll('.hbtn[id^="btnMode"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildEquips();
+  render();
+}
+
+// ── BUILD EQUIPS ──
+function buildEquips() {
+  const wrap = document.getElementById('headerEquips');
+  wrap.innerHTML = '';
+
+  // All button
+  const allBtn = document.createElement('button');
+  allBtn.className = 'equip-btn all-btn active';
+  allBtn.innerHTML = `<span class="btn-selos">★ Todos</span><span class="btn-name">${Object.keys(currentData).length} equip.</span>`;
+  allBtn.addEventListener('click', () => selectEquip('ALL', allBtn));
+  wrap.appendChild(allBtn);
+  activeEquipBtn = allBtn;
+
+  Object.entries(currentData)
+    .sort((a, b) => a[1].selos.localeCompare(b[1].selos))
+    .forEach(([issi, eq]) => {
+      const name = USER_MAP[eq.selos] || '—';
+      const btn = document.createElement('button');
+      btn.className = 'equip-btn';
+      let subLabel = name;
+      if (currentMode === 'group' && eq.groups) subLabel = Object.keys(eq.groups).join(', ') || name;
+      btn.innerHTML = `<span class="btn-selos">${eq.selos}</span><span class="btn-name">${subLabel}</span>`;
+      btn.addEventListener('click', () => selectEquip(issi, btn));
+      wrap.appendChild(btn);
+    });
+
+  // Group chips
+  const gfw = document.getElementById('groupFilterWrap');
+  const gChips = document.getElementById('groupChips');
+  gChips.innerHTML = '';
+  if (currentMode === 'group') {
+    gfw.style.display = 'flex';
+    const allGroups = new Set();
+    Object.values(currentData).forEach(eq => Object.keys(eq.groups || {}).forEach(g => allGroups.add(g)));
+    const allChip = Object.assign(document.createElement('span'), {className:'group-chip active',id:'chip_ALL',textContent:'Todos'});
+    allChip.addEventListener('click', () => selectGroup('ALL')); gChips.appendChild(allChip);
+    [...allGroups].sort().forEach(g => {
+      const chip = Object.assign(document.createElement('span'), {className:'group-chip',id:'chip_'+g,textContent:g});
+      chip.addEventListener('click', () => selectGroup(g)); gChips.appendChild(chip);
+    });
+  } else { gfw.style.display = 'none'; }
+}
+
+function selectEquip(issi, btn) {
+  selectedISS = issi;
+  if (activeEquipBtn) activeEquipBtn.classList.remove('active');
+  btn.classList.add('active'); activeEquipBtn = btn;
+  hidePopup(); render();
+}
+function selectGroup(g) {
+  selectedGroup = g;
+  document.querySelectorAll('.group-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.getElementById('chip_' + g);
+  if (chip) chip.classList.add('active');
+  selectedISS = 'ALL';
+  if (activeEquipBtn) activeEquipBtn.classList.remove('active');
+  const a = document.querySelector('.all-btn');
+  if (a) { a.classList.add('active'); activeEquipBtn = a; }
+  hidePopup(); render();
+}
+function clearDate() { selectedDate = 'ALL'; hidePopup(); render(); }
+
+// ── COLORS ──
+function hC(v, mx) {
+  if (v === 0) return 'var(--h0)';
+  const r = v / mx;
+  if (r < .15) return 'var(--h1)'; if (r < .35) return 'var(--h2)';
+  if (r < .65) return 'var(--h3)'; if (r < .85) return 'var(--h4)';
+  return 'var(--h5)';
+}
+function calC(v, mx) {
+  if (v === 0) return 'var(--h0)';
+  const r = v / mx;
+  if (r < .1) return '#1a2a3a'; if (r < .3) return 'var(--h1)';
+  if (r < .55) return 'var(--h2)'; if (r < .75) return 'var(--h3)';
+  if (r < .9) return 'var(--h4)'; return 'var(--h5)';
+}
+
+// ── KEYS ──
+function getKeys() {
+  let keys = selectedISS !== 'ALL' ? [selectedISS] : Object.keys(currentData);
+  if (currentMode === 'group' && selectedGroup !== 'ALL')
+    keys = keys.filter(k => currentData[k].groups && currentData[k].groups[selectedGroup]);
+  return keys;
+}
+function getDayCounts(keys) {
+  const m = {};
+  keys.forEach(k => Object.entries(currentData[k].dayCounts).forEach(([d,c]) => { m[d] = (m[d]||0)+c; }));
+  return m;
+}
+function getHourCounts(keys) {
+  const m = new Array(24).fill(0);
+  keys.forEach(k => {
+    const eq = currentData[k];
+    if (selectedDate !== 'ALL') {
+      const dhc = (eq.dayHourCounts || {})[selectedDate];
+      if (dhc) dhc.forEach((c,h) => { m[h] += c; });
+    } else { eq.hourCounts.forEach((c,h) => { m[h] += c; }); }
+  });
+  return m;
+}
+
+// ── POPUP ──
+let popupOpen = false;
+function hidePopup() {
+  document.getElementById('chartPopup').classList.remove('show');
+  popupOpen = false;
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#chartPopup') && !e.target.closest('.bar-col')) hidePopup();
+});
+
+function showPopup(hour, keys, hourCounts, e) {
+  const popup = document.getElementById('chartPopup');
+  const total = hourCounts[hour];
+  if (total === 0) { hidePopup(); return; }
+
+  let html = `<div class="popup-title">⏰ ${String(hour).padStart(2,'0')}h00 — ${total} evento${total!==1?'s':''}</div>`;
+
+  if (selectedISS === 'ALL') {
+    // Show which equipments had events at this hour
+    const equips = keys
+      .map(k => {
+        const eq = currentData[k];
+        let cnt;
+        if (selectedDate !== 'ALL') {
+          cnt = ((eq.dayHourCounts||{})[selectedDate]||[])[hour] || 0;
+        } else { cnt = eq.hourCounts[hour]; }
+        return { selos: eq.selos, name: USER_MAP[eq.selos]||'—', cnt };
+      })
+      .filter(x => x.cnt > 0)
+      .sort((a,b) => b.cnt - a.cnt);
+
+    equips.forEach(x => {
+      html += `<div class="popup-row"><span class="popup-key">${x.selos} <span style="color:var(--muted);font-size:.6rem">${x.name}</span></span><span class="popup-val">${x.cnt}</span></div>`;
+    });
+  } else {
+    // Single equipment: show hours breakdown around this hour or just confirm
+    const eq = currentData[selectedISS];
+    const name = USER_MAP[eq.selos] || '—';
+    html += `<div class="popup-row"><span class="popup-key" style="color:var(--accent)">${eq.selos}</span><span style="color:var(--muted);font-size:.6rem">${name}</span></div>`;
+    html += `<div class="popup-row"><span class="popup-key">${String(hour).padStart(2,'0')}h — ${String(hour+1).padStart(2,'0')}h</span><span class="popup-val">${total} evento${total!==1?'s':''}</span></div>`;
+  }
+
+  popup.innerHTML = html;
+  popup.classList.add('show');
+
+  // Position popup near click
+  const px = e.clientX + 12;
+  const py = e.clientY - 10;
+  popup.style.left = Math.min(px, window.innerWidth - 280) + 'px';
+  popup.style.top  = Math.max(10, py) + 'px';
+  popupOpen = true;
+}
+
+// ── RENDER ──
+function render() {
+  const keys  = getKeys();
+  const allDC = getDayCounts(keys);
+  const hourC = getHourCounts(keys);
+
+  let total, days;
+  if (selectedDate !== 'ALL') {
+    total = keys.reduce((s,k) => s + (((currentData[k].dayHourCounts||{})[selectedDate]||[]).reduce((a,b)=>a+b,0)), 0);
+    days  = keys.filter(k => (currentData[k].dayCounts[selectedDate]||0) > 0).length;
+  } else {
+    total = keys.reduce((s,k) => s + currentData[k].total, 0);
+    days  = Object.values(allDC).filter(v=>v>0).length;
+  }
+
+  const hourMax = Math.max(...hourC, 0);
+  const peak  = hourMax > 0 ? hourC.indexOf(hourMax) : 0;
+  const dates = Object.keys(allDC).sort();
+  const range = dates.length
+    ? `${dates[0].slice(5).replace('-','/')} → ${dates[dates.length-1].slice(5).replace('-','/')}`
+    : '—';
+
+  document.getElementById('statTotal').textContent = total.toLocaleString('pt-BR');
+  document.getElementById('statDays').textContent  = selectedDate !== 'ALL' ? days + (days === 1 ? ' equip' : ' equips') : days;
+  document.getElementById('statPeak').textContent  = hourMax > 0 ? String(peak).padStart(2,'0') + 'h' : '—';
+  document.getElementById('statRange').textContent = selectedDate !== 'ALL'
+    ? selectedDate.split('-').reverse().join('/') : range;
+
+  const badge = document.getElementById('dateBadge');
+  if (selectedDate !== 'ALL') {
+    document.getElementById('badgeDate').textContent = selectedDate.split('-').reverse().join('/');
+    badge.classList.add('show');
+  } else { badge.classList.remove('show'); }
+
+  // Chart title
+  document.getElementById('chartTitle').textContent = selectedISS === 'ALL'
+    ? 'Linha do Tempo 24h — clique em uma hora para ver equipamentos'
+    : `Linha do Tempo 24h — clique em uma hora para detalhar`;
+
+  renderChart(hourC, peak, keys);
+  renderCalendar(allDC);
+}
+
+// ── CHART ──
+function renderChart(hourC, peak, keys) {
+  const mx = Math.max(...hourC, 0);
+  const inner = document.getElementById('chartInner');
+  const yLbls = document.getElementById('yLabels');
+  const barsArea = document.getElementById('barsArea');
+  const labelsRow = document.getElementById('labelsRow');
+  
+  // Clear grid lines from inner (keep barsArea and labelsRow)
+  [...inner.children].forEach(c => {
+    if (c.classList.contains('grid-line')) c.remove();
+  });
+  yLbls.innerHTML = '';
+  barsArea.innerHTML = '';
+  labelsRow.innerHTML = '';
+  
+  // Peak badge
+  document.getElementById('peakInfo').innerHTML = mx > 0
+    ? `<span class="peak-badge">⚡ ${String(peak).padStart(2,'0')}h — ${hourC[peak]}</span>` : '';
+
+  // Grid lines + Y labels (5 levels)
+  const levels = 4;
+  for (let i = 0; i <= levels; i++) {
+    const pct = (i / levels) * 100;
+    const val = mx > 0 ? Math.round(mx * (levels - i) / levels) : 0;
+
+    const line = document.createElement('div');
+    line.className = 'grid-line';
+    line.style.bottom = pct + '%';
+    barsArea.appendChild(line);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'y-lbl';
+    lbl.textContent = val;
+    yLbls.appendChild(lbl);
+  }
+
+  if (mx === 0) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.7rem;font-family:IBM Plex Mono,monospace;';
+    msg.textContent = 'Sem eventos neste período';
+    barsArea.appendChild(msg);
+    return;
+  }
+
+  // Bars + Labels
+  for (let h = 0; h < 24; h++) {
+    const pct = hourC[h] > 0 ? Math.max(2, Math.round((hourC[h] / mx) * 100)) : 0;
+    const isPeak = h === peak && hourC[h] > 0;
+    const color = isPeak ? 'var(--accent2)' : hC(hourC[h], mx);
+
+    // Bar column (in bars-area)
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.style.position = 'relative';
+    col.innerHTML = `
+      <div class="bar-val">${hourC[h] > 0 ? hourC[h] : ''}</div>
+      <div class="bar" style="height:${pct}%;background:${color}"></div>`;
+    col.addEventListener('click', (e) => { e.stopPropagation(); showPopup(h, keys, hourC, e); });
+    barsArea.appendChild(col);
+
+    // Label (in labels-row)
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-lbl';
+    lbl.textContent = String(h).padStart(2,'0') + 'h';
+    lbl.addEventListener('click', (e) => { e.stopPropagation(); showPopup(h, keys, hourC, e); });
+    labelsRow.appendChild(lbl);
+  }
+}
+
+// ── CALENDAR ──
+function renderCalendar(dc) {
+  const container = document.getElementById('calContainer');
+  container.innerHTML = '';
+  const months = {};
+  Object.keys(dc).forEach(d => { const ym = d.slice(0,7); if (!months[ym]) months[ym]={}; months[ym][d]=dc[d]; });
+  const mx = Math.max(...Object.values(dc), 1);
+  const mN = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const dN = ['D','S','T','Q','Q','S','S'];
+
+  Object.keys(months).sort().forEach(ym => {
+    const [yr,mo] = ym.split('-').map(Number);
+    const md = months[ym];
+    const block = document.createElement('div'); block.className = 'month-block';
+    const title = document.createElement('div'); title.className = 'month-title';
+    title.textContent = `${mN[mo-1]} ${yr}`; block.appendChild(title);
+    const cg = document.createElement('div'); cg.className = 'cal-grid';
+    dN.forEach(d => { const h = document.createElement('div'); h.className='cal-dow'; h.textContent=d; cg.appendChild(h); });
+    const fd = new Date(yr,mo-1,1).getDay();
+    for (let i=0;i<fd;i++) { const e=document.createElement('div'); e.className='cal-day empty'; cg.appendChild(e); }
+    const dim = new Date(yr,mo,0).getDate();
+    for (let d=1;d<=dim;d++) {
+      const ds=`${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cnt=md[ds]||0;
+      const el=document.createElement('div');
+      el.className=`cal-day ${cnt>0?'has-data':'no-data'}`;
+      if (selectedDate===ds) el.classList.add('selected');
+      el.style.background=cnt>0?calC(cnt,mx):'var(--h0)';
+      el.innerHTML=`<span>${d}</span>${cnt>0?`<span class="cal-count">${cnt}</span>`:''}`;
+      el.title=cnt>0?`${ds}: ${cnt} eventos`:ds;
+      if (cnt>0) el.addEventListener('click', ()=>{ selectedDate=selectedDate===ds?'ALL':ds; hidePopup(); render(); });
+      cg.appendChild(el);
+    }
+    block.appendChild(cg); container.appendChild(block);
+  });
+}
+
+// ── DRAG & DROP ──
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  const main = document.getElementById('mainArea');
+  const btn  = document.getElementById('layoutBtn');
+  const banner = document.getElementById('editBanner');
+  const panels = ['panelCal','panelBar'].map(id => document.getElementById(id)).filter(Boolean);
+  if (isEditMode) {
+    main.classList.add('edit-mode'); btn.classList.add('edit-active'); btn.textContent='✓ Concluir'; banner.classList.add('show');
+    panels.forEach(p => { p.setAttribute('draggable','true'); p.addEventListener('dragstart',onDragStart); p.addEventListener('dragover',onDragOver); p.addEventListener('dragleave',onDragLeave); p.addEventListener('drop',onDrop); p.addEventListener('dragend',onDragEnd); });
+  } else {
+    main.classList.remove('edit-mode'); btn.classList.remove('edit-active'); btn.textContent='✏️ Layout'; banner.classList.remove('show');
+    panels.forEach(p => { p.setAttribute('draggable','false'); p.removeEventListener('dragstart',onDragStart); p.removeEventListener('dragover',onDragOver); p.removeEventListener('dragleave',onDragLeave); p.removeEventListener('drop',onDrop); p.removeEventListener('dragend',onDragEnd); });
+    saveLayout();
+  }
+}
+function onDragStart(e){dragSrc=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';if(this!==dragSrc)this.classList.add('drag-over');return false;}
+function onDragLeave(){this.classList.remove('drag-over');}
+function onDrop(e){e.stopPropagation();if(dragSrc!==this){const main=document.getElementById('mainArea');const ch=[...main.children];const si=ch.indexOf(dragSrc),di=ch.indexOf(this);main.insertBefore(dragSrc,si<di?this.nextSibling:this);}this.classList.remove('drag-over');return false;}
+function onDragEnd(){this.classList.remove('dragging');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('drag-over'));}
+function saveLayout(){const main=document.getElementById('mainArea');const order=[...main.querySelectorAll('.panel')].map(p=>p.id).filter(Boolean);localStorage.setItem('dcx_layout2',JSON.stringify(order));}
+function restoreLayout(){try{const saved=JSON.parse(localStorage.getItem('dcx_layout2')||'[]');if(!saved.length)return;const main=document.getElementById('mainArea');saved.forEach(id=>{const el=document.getElementById(id);if(el)main.appendChild(el);});}catch(e){}}
+
+// ── PROCESSAR LINHAS DO SHEETS → estrutura do dashboard ──
+function processSheetRows(rows) {
+  const result = {};
+  rows.forEach(row => {
+    const issi    = String(row[0] || '').trim();
+    const grupo   = String(row[1] || '').trim();
+    const dataRaw = String(row[2] || '').trim();
+    const horaRaw = String(row[3] || '').trim();
+    if (!issi || !dataRaw) return;
+
+    // Normaliza data para AAAA-MM-DD
+    let dataKey = '';
+    const m1 = dataRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    const m2 = dataRaw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m1) dataKey = m1[3]+'-'+m1[2]+'-'+m1[1];
+    else if (m2) dataKey = dataRaw.slice(0,10);
+    if (!dataKey) return;
+
+    // Hora
+    let hora = 0;
+    const hm = horaRaw.match(/^(\d{1,2}):/);
+    if (hm) hora = parseInt(hm[1]);
+    else if (/^\d+$/.test(horaRaw)) hora = parseInt(horaRaw);
+    if (hora < 0 || hora > 23) hora = 0;
+
+    if (!result[issi]) {
+      const meta = ISSI_META[issi] || { selos: issi, serial: '' };
+      result[issi] = {
+        selos: meta.selos, serial: meta.serial,
+        hourCounts: new Array(24).fill(0),
+        dayCounts: {}, dayHourCounts: {}, total: 0, groups: {}
+      };
+    }
+    const eq = result[issi];
+    eq.hourCounts[hora]++;
+    eq.dayCounts[dataKey] = (eq.dayCounts[dataKey] || 0) + 1;
+    if (!eq.dayHourCounts[dataKey]) eq.dayHourCounts[dataKey] = new Array(24).fill(0);
+    eq.dayHourCounts[dataKey][hora]++;
+    eq.total++;
+    if (grupo) eq.groups[grupo] = (eq.groups[grupo] || 0) + 1;
+  });
+  return result;
+}
+
+// ── CARREGAR DO SHEETS ──
+async function carregarDoSheets() {
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.style.display = 'flex';
+  try {
+    const url = new URL(WEB_APP_URL);
+    url.searchParams.set('action', 'getDCX');
+    url.searchParams.set('aba', SHEET_ABA);
+    const resp = await fetch(url.toString(), { redirect: 'follow' });
+    const json = await resp.json();
+    let rows = Array.isArray(json) ? json : (json.rows || json.data || []);
+    // Remove cabeçalho se presente
+    if (rows.length > 0 && typeof rows[0][0] === 'string' &&
+        /issi|radio/i.test(String(rows[0][0]))) rows = rows.slice(1);
+    if (rows.length === 0) throw new Error('Planilha DCX vazia');
+    currentData  = processSheetRows(rows);
+    selectedISS  = 'ALL';
+    selectedDate = 'ALL';
+    buildEquips();
+    restoreLayout();
+    render();
+    if (overlay) overlay.style.display = 'none';
+  } catch (err) {
+    if (overlay) overlay.innerHTML = `
+      <div style="text-align:center;color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:24px">
+        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+        <div style="margin-bottom:6px">Erro ao carregar dados</div>
+        <div style="font-size:.65rem;color:#64748b;margin-bottom:16px">${err.message}</div>
+        <button onclick="carregarDoSheets()" style="background:#00c6ff;color:#000;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:700;font-size:.75rem">🔄 Tentar novamente</button>
+      </div>`;
+  }
+}
+
+// ── INIT ──
+restoreLayout();
+carregarDoSheets();
+</script>
+
+<div id="loadingOverlay" style="display:flex;position:fixed;inset:0;background:rgba(13,15,20,.93);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="width:44px;height:44px;border:3px solid #2a3045;border-top-color:#00c6ff;border-radius:50%;animation:spin 1s linear infinite"></div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:#00c6ff;letter-spacing:.5px">Carregando dados do Google Sheets…</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#64748b">aba DCX</div>
+</div>
+</body>
+</html>
