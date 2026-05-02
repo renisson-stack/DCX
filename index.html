@@ -955,13 +955,17 @@ function recarregarDashboard() {
   carregarDoSheets();
 }
 
-// Drop zone
-const impDZ = document.getElementById('impDropZone');
-const impFI = document.getElementById('impFileInput');
-impDZ.addEventListener('dragover', e => { e.preventDefault(); impDZ.classList.add('drag-over'); });
-impDZ.addEventListener('dragleave', () => impDZ.classList.remove('drag-over'));
-impDZ.addEventListener('drop', e => { e.preventDefault(); impDZ.classList.remove('drag-over'); impHandleFiles([...e.dataTransfer.files]); });
-impFI.addEventListener('change', () => { impHandleFiles([...impFI.files]); impFI.value=''; });
+// Drop zone — init after DOM ready (modal HTML is below the script)
+function impInitDropZone() {
+  const impDZ = document.getElementById('impDropZone');
+  const impFI = document.getElementById('impFileInput');
+  if (!impDZ || !impFI) return;
+  impDZ.addEventListener('dragover', e => { e.preventDefault(); impDZ.classList.add('drag-over'); });
+  impDZ.addEventListener('dragleave', () => impDZ.classList.remove('drag-over'));
+  impDZ.addEventListener('drop', e => { e.preventDefault(); impDZ.classList.remove('drag-over'); impHandleFiles([...e.dataTransfer.files]); });
+  impFI.addEventListener('change', () => { impHandleFiles([...impFI.files]); impFI.value=''; });
+}
+document.addEventListener('DOMContentLoaded', impInitDropZone);
 
 function impHandleFiles(files) {
   files.filter(f => /\.(xlsx|xls|csv)$/i.test(f.name)).forEach(f => {
