@@ -937,7 +937,9 @@ async function carregarDoSheets() {
     if (!rows.length) throw new Error('Planilha DCX vazia — clique em Importar para enviar dados');
     currentData = processSheetRows(rows);
     selectedISS = 'ALL'; selectedDate = 'ALL';
-    buildEquips(); restoreLayout(); render();
+    try { buildEquips(); } catch(e) { console.error('buildEquips error:', e); }
+    try { restoreLayout(); } catch(e) { console.error('restoreLayout error:', e); }
+    try { render(); } catch(e) { console.error('render error:', e); }
     if (overlay) overlay.style.display = 'none';
   } catch(err) {
     console.error('Sheets error:', err);
