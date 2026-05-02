@@ -93,7 +93,8 @@ h1 span{color:var(--accent);}
 .equip-btn:hover{background:var(--surface2);border-color:var(--border);}
 .equip-btn.active{background:rgba(0,198,255,.1);border-color:var(--accent);}
 .btn-selos{font-size:.65rem;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--accent);display:block;line-height:1.1;white-space:nowrap;}
-.btn-name{font-size:.5rem;color:var(--muted);display:block;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54px;}
+.btn-name{font-size:.5rem;color:var(--muted);display:block;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;}
+.btn-issi{font-size:.42rem;color:var(--muted);opacity:.6;display:block;line-height:1.1;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
 .all-btn .btn-selos{color:var(--accent2);font-size:.68rem;}
 .all-btn .btn-name{font-size:.5rem;}
 
@@ -452,14 +453,30 @@ main{flex:1;padding:24px;display:flex;flex-direction:column;gap:18px;max-width:1
 <script>
 
 const USER_MAP = {
-  "205685":"VERIFICAR","490171":"Almir Dias","493638":"Bryan Reis",
-  "205769":"Clayton V.","493634":"Daniel T.","493520":"Eberson J.",
-  "490364":"Daniel Th.","490380":"Fabio M.","205732":"Gabriel A.",
-  "205704":"Jair R.","490540":"Renato L.","205782":"João Paulo",
-  "490330":"José D.","493512":"Josemar R.","490221":"Isaias F.",
-  "493746":"Thiago L.","493426":"Luciano G.","490177":"Isaias F.",
-  "490370":"Mirella C.","205777":"Natalia A.","490460":"Nycolas A.",
-  "490109":"VERIFICAR","205719":"Rafael S.","490231":"Thiago L."
+  "205685":"Login Alexav",
+  "490171":"Almir Dias",
+  "493638":"Bryan Reis",
+  "205769":"Clayton Vinicius",
+  "493634":"Daniel Teodoro",
+  "493520":"Eberson Joel",
+  "490364":"Daniel Thomaz",
+  "490380":"Fabio Mascarenhas",
+  "205732":"Gabriel Araujo",
+  "205704":"Jair Ribeiro",
+  "490540":"Renato Loureiro",
+  "205782":"Joao Paulo",
+  "490330":"Jose Daltro",
+  "493512":"Josemar Raposo",
+  "490221":"Isaias Ferro",
+  "493746":"Thiago Lima",
+  "493426":"Luciano Gil",
+  "490177":"Isaias Ferro",
+  "490370":"Mirella Contreiras",
+  "205777":"Natalia Azevedo",
+  "490460":"Nycolas Andre",
+  "490109":"Login Paulot",
+  "205719":"Rafael Silva",
+  "490231":"Thiago Lourenco"
 };
 
 // ── CONFIG SHEETS ──
@@ -468,27 +485,27 @@ const SHEET_ABA   = 'DCX';
 
 // ── MAPA ISSI → SELOS/SERIAL ──
 const ISSI_META = {
-  "10210047":{"selos":"490171","serial":"111TRU0289"},
-  "10210053":{"selos":"205769","serial":"111TNL0566"},
-  "10210056":{"selos":"493520","serial":"111TRU0626"},
-  "10210059":{"selos":"490380","serial":"111TRU0335"},
-  "10210066":{"selos":"490330","serial":"111TRU0295"},
-  "10210075":{"selos":"490460","serial":"111TRU0341"},
-  "10210082":{"selos":"490221","serial":"111TRU0403"},
-  "10210093":{"selos":"205704","serial":"111TMY0880"},
-  "10210144":{"selos":"493634","serial":"111TRU0546"},
-  "10210147":{"selos":"490364","serial":"111TRU0221"},
-  "10210150":{"selos":"493512","serial":"111TRU0586"},
-  "10210151":{"selos":"490370","serial":"111TRU0393"},
-  "10210152":{"selos":"493746","serial":"111TRU0711"},
-  "10210159":{"selos":"490109","serial":"111TRU0444"},
-  "10210170":{"selos":"493638","serial":"111TRU0673"},
-  "10210229":{"selos":"490177","serial":"111TRU0360"},
-  "10210305":{"selos":"205732","serial":"111TNL0691"},
-  "10210307":{"selos":"205719","serial":"111TNL0698"},
-  "10210310":{"selos":"205777","serial":"111TMY2279"},
-  "10210312":{"selos":"205782","serial":"111TNL0590"},
-  "10210439":{"selos":"490540","serial":"111TRU0225"}
+  "10210047":{"selos":"490171","serial":"111TRU0289","nome":"Almir Dias"},
+  "10210053":{"selos":"205769","serial":"111TNL0566","nome":"Clayton Vinicius"},
+  "10210056":{"selos":"493520","serial":"111TRU0626","nome":"Eberson Joel"},
+  "10210059":{"selos":"490380","serial":"111TRU0335","nome":"Fabio Mascarenhas"},
+  "10210066":{"selos":"490330","serial":"111TRU0295","nome":"Jose Daltro"},
+  "10210075":{"selos":"490460","serial":"111TRU0341","nome":"Nycolas Andre"},
+  "10210082":{"selos":"490221","serial":"111TRU0403","nome":"Isaias Ferro"},
+  "10210093":{"selos":"205704","serial":"111TMY0880","nome":"Jair Ribeiro"},
+  "10210144":{"selos":"493634","serial":"111TRU0546","nome":"Daniel Teodoro"},
+  "10210147":{"selos":"490364","serial":"111TRU0221","nome":"Daniel Thomaz"},
+  "10210150":{"selos":"493512","serial":"111TRU0586","nome":"Josemar Raposo"},
+  "10210151":{"selos":"490370","serial":"111TRU0393","nome":"Mirella Contreiras"},
+  "10210152":{"selos":"493746","serial":"111TRU0711","nome":"Thiago Lima"},
+  "10210159":{"selos":"490109","serial":"111TRU0444","nome":"Login Paulot"},
+  "10210170":{"selos":"493638","serial":"111TRU0673","nome":"Bryan Reis"},
+  "10210229":{"selos":"490177","serial":"111TRU0360","nome":"Isaias Ferro"},
+  "10210305":{"selos":"205732","serial":"111TNL0691","nome":"Gabriel Araujo"},
+  "10210307":{"selos":"205719","serial":"111TNL0698","nome":"Rafael Silva"},
+  "10210310":{"selos":"205777","serial":"111TMY2279","nome":"Natalia Azevedo"},
+  "10210312":{"selos":"205782","serial":"111TNL0590","nome":"Joao Paulo"},
+  "10210439":{"selos":"490540","serial":"111TRU0225","nome":"Renato Loureiro"}
 };
 
 // ── PROCESSAR LINHAS DO SHEETS ──
@@ -516,9 +533,10 @@ function processSheetRows(rows) {
     else if (/^\d+$/.test(horaRaw)) hora = parseInt(horaRaw);
     if (hora < 0 || hora > 23) hora = 0;
     if (!result[issi]) {
-      const meta = ISSI_META[issi] || { selos: issi, serial: '' };
+      const meta = ISSI_META[issi] || { selos: issi, serial: '', nome: '' };
       result[issi] = {
         selos: meta.selos, serial: meta.serial,
+        nome: meta.nome || USER_MAP[meta.selos] || '',
         hourCounts: new Array(24).fill(0),
         dayCounts: {}, dayHourCounts: {}, total: 0, groups: {}
       };
@@ -580,7 +598,7 @@ function buildEquips() {
   // All button
   const allBtn = document.createElement('button');
   allBtn.className = 'equip-btn all-btn active';
-  allBtn.innerHTML = `<span class="btn-selos">★ Todos</span><span class="btn-name">${Object.keys(currentData).length} equip.</span>`;
+  allBtn.innerHTML = `<span class="btn-selos">★ Todos</span><span class="btn-name">${Object.keys(currentData).length} equip.</span><span class="btn-issi">ALL</span>`;
   allBtn.addEventListener('click', () => selectEquip('ALL', allBtn));
   wrap.appendChild(allBtn);
   activeEquipBtn = allBtn;
@@ -588,12 +606,13 @@ function buildEquips() {
   Object.entries(currentData)
     .sort((a, b) => a[1].selos.localeCompare(b[1].selos))
     .forEach(([issi, eq]) => {
-      const name = USER_MAP[eq.selos] || '—';
+      const name = eq.nome || USER_MAP[eq.selos] || '—';
       const btn = document.createElement('button');
       btn.className = 'equip-btn';
+      btn.title = `${name} | ISSI: ${issi} | SELO: ${eq.selos}`;
       let subLabel = name;
       if (currentMode === 'group' && eq.groups) subLabel = Object.keys(eq.groups).join(', ') || name;
-      btn.innerHTML = `<span class="btn-selos">${eq.selos}</span><span class="btn-name">${subLabel}</span>`;
+      btn.innerHTML = `<span class="btn-selos">${eq.selos}</span><span class="btn-name">${subLabel}</span><span class="btn-issi">${issi}</span>`;
       btn.addEventListener('click', () => selectEquip(issi, btn));
       wrap.appendChild(btn);
     });
@@ -700,7 +719,7 @@ function showPopup(hour, keys, hourCounts, e) {
         if (selectedDate !== 'ALL') {
           cnt = ((eq.dayHourCounts||{})[selectedDate]||[])[hour] || 0;
         } else { cnt = eq.hourCounts[hour]; }
-        return { selos: eq.selos, name: USER_MAP[eq.selos]||'—', cnt };
+        return { selos: eq.selos, name: eq.nome || USER_MAP[eq.selos]||'—', cnt };
       })
       .filter(x => x.cnt > 0)
       .sort((a,b) => b.cnt - a.cnt);
@@ -711,7 +730,7 @@ function showPopup(hour, keys, hourCounts, e) {
   } else {
     // Single equipment: show hours breakdown around this hour or just confirm
     const eq = currentData[selectedISS];
-    const name = USER_MAP[eq.selos] || '—';
+    const name = eq.nome || USER_MAP[eq.selos] || '—';
     html += `<div class="popup-row"><span class="popup-key" style="color:var(--accent)">${eq.selos}</span><span style="color:var(--muted);font-size:.6rem">${name}</span></div>`;
     html += `<div class="popup-row"><span class="popup-key">${String(hour).padStart(2,'0')}h — ${String(hour+1).padStart(2,'0')}h</span><span class="popup-val">${total} evento${total!==1?'s':''}</span></div>`;
   }
