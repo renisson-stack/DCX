@@ -126,6 +126,15 @@ h1 span{color:var(--accent);}
   display:flex;flex-direction:column;gap:8px;
   min-height:0;
 }
+/* Calendar+Groups row: fixed to roughly half the available space */
+.cal-groups-row{
+  display:flex;
+  gap:8px;
+  height:calc(50vh - 80px);
+  min-height:220px;
+  max-height:360px;
+  flex-shrink:0;
+}
 
 /* Edit banner */
 .edit-banner{display:none;align-items:center;gap:8px;background:rgba(245,158,11,.12);border:1px solid var(--accent2);border-radius:6px;padding:5px 12px;font-size:.66rem;font-family:'IBM Plex Mono',monospace;color:var(--accent2);flex-shrink:0;}
@@ -158,7 +167,24 @@ h1 span{color:var(--accent);}
 /* ══════════════════════════════
    CALENDAR
 ══════════════════════════════ */
-.calendar-container{display:flex;gap:10px;flex-wrap:wrap;}
+.cal-groups-row{
+  display:flex;
+  gap:8px;
+  height:320px;
+  flex-shrink:0;
+}
+.calendar-container{
+  display:grid;
+  grid-template-columns:repeat(3,auto);
+  gap:10px;
+  overflow-y:auto;
+  max-height:100%;
+  padding-right:4px;
+  align-content:start;
+}
+.calendar-container::-webkit-scrollbar{width:4px;}
+.calendar-container::-webkit-scrollbar-track{background:transparent;}
+.calendar-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 .month-block{flex:0 0 auto;}
 .month-title{font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,26px);gap:2px;}
@@ -316,6 +342,7 @@ h1 span{color:var(--accent);}
       <button class="hbtn" id="layoutBtn" onclick="toggleEditMode()">✏️ Layout</button>
       <button class="hbtn" id="themeToggleBtn" onclick="toggleTheme()">☀️ White</button>
       <button class="hbtn" onclick="abrirImportador()" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.4);color:var(--accent3)">📥 Importar</button>
+      <button class="hbtn" onclick="gerarRelatorio()" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4);color:var(--accent2)">📊 Relatório</button>
     </div>
   </div>
 
@@ -336,28 +363,26 @@ h1 span{color:var(--accent);}
       <button class="clear-btn" onclick="toggleEditMode()">✓ Concluir</button>
     </div>
 
-    <div class="date-badge" id="dateBadge">
-      <span>📅 <span id="badgeDate">—</span></span>
-      <button class="clear-btn" onclick="clearDate()">✕</button>
-    </div>
+    <!-- date-badge hidden: click same day again to deselect -->
+    <div id="dateBadge" style="display:none"><span id="badgeDate"></span></div>
 
     <!-- CALENDÁRIO + GRUPOS (lado a lado) -->
-    <div style="display:flex;gap:8px;flex-shrink:0;min-height:0">
+    <div class="cal-groups-row">
 
       <!-- CALENDÁRIO -->
-      <div class="panel" id="panelCal" style="flex:1;min-width:0">
+      <div class="panel" id="panelCal" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
         <div class="drag-handle">⠿ mover</div>
-        <div class="panel-title">Calendário de Uso — clique em um dia para filtrar</div>
-        <div class="calendar-container" id="calContainer"></div>
+        <div class="panel-title" style="flex-shrink:0">Calendário de Uso — clique em um dia para filtrar</div>
+        <div class="calendar-container" id="calContainer" style="flex:1;min-height:0"></div>
       </div>
 
       <!-- PAINEL DE GRUPOS -->
-      <div class="panel" id="panelGroups" style="width:260px;flex-shrink:0;display:flex;flex-direction:column;min-height:0">
-        <div class="panel-title" style="justify-content:space-between;flex-shrink:0">
+      <div class="panel" id="panelGroups" style="width:280px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
+        <div class="panel-title" style="justify-content:space-between;flex-shrink:0;margin-bottom:6px">
           <span>Grupos</span>
-          <span id="groupsEquipLabel" style="font-size:.58rem;color:var(--accent);font-family:'IBM Plex Mono',monospace"></span>
+          <span id="groupsEquipLabel" style="font-size:.58rem;color:var(--accent);font-family:'IBM Plex Mono',monospace;text-align:right;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
         </div>
-        <div id="groupsList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0"></div>
+        <div id="groupsList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;padding-right:2px"></div>
       </div>
 
     </div>
@@ -697,11 +722,7 @@ function render() {
   document.getElementById('statRange').textContent = selectedDate !== 'ALL'
     ? selectedDate.split('-').reverse().join('/') : range;
 
-  const badge = document.getElementById('dateBadge');
-  if (selectedDate !== 'ALL') {
-    document.getElementById('badgeDate').textContent = selectedDate.split('-').reverse().join('/');
-    badge.classList.add('show');
-  } else { badge.classList.remove('show'); }
+  // date badge hidden - click same day to deselect
 
   // Chart title
   document.getElementById('chartTitle').textContent = selectedISS === 'ALL'
@@ -869,38 +890,66 @@ function renderGroups(keys) {
 function renderCalendar(dc) {
   const container = document.getElementById('calContainer');
   container.innerHTML = '';
-  const months = {};
-  Object.keys(dc).forEach(d => { const ym = d.slice(0,7); if (!months[ym]) months[ym]={}; months[ym][d]=dc[d]; });
-  const mx = Math.max(...Object.values(dc), 1);
+  const mxVal = Object.values(dc).length ? Math.max(...Object.values(dc), 1) : 1;
   const mN = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const dN = ['D','S','T','Q','Q','S','S'];
 
-  Object.keys(months).sort().forEach(ym => {
-    const [yr,mo] = ym.split('-').map(Number);
-    const md = months[ym];
+  // Determine first month from data, extend to Dec 2026
+  const sortedKeys = Object.keys(dc).sort();
+  const firstYm = sortedKeys.length ? sortedKeys[0].slice(0,7) : '2026-03';
+  const [fy, fm] = firstYm.split('-').map(Number);
+
+  // Build full list: first data month → Dec 2026
+  const allMonths = [];
+  let cy = fy, cm = fm;
+  while (cy < 2026 || (cy === 2026 && cm <= 12)) {
+    allMonths.push(`${cy}-${String(cm).padStart(2,'0')}`);
+    cm++; if (cm > 12) { cm = 1; cy++; }
+  }
+
+  allMonths.forEach(ym => {
+    const [y, m] = ym.split('-').map(Number);
+    // Gather day counts for this month
+    const md = {};
+    sortedKeys.forEach(d => { if (d.startsWith(ym+'-')) md[d] = dc[d]; });
+    const hasData = Object.keys(md).length > 0;
+
     const block = document.createElement('div'); block.className = 'month-block';
     const title = document.createElement('div'); title.className = 'month-title';
-    title.textContent = `${mN[mo-1]} ${yr}`; block.appendChild(title);
+    if (!hasData) title.style.opacity = '.45';
+    title.textContent = `${mN[m-1]} ${y}`;
+    block.appendChild(title);
+
     const cg = document.createElement('div'); cg.className = 'cal-grid';
-    dN.forEach(d => { const h = document.createElement('div'); h.className='cal-dow'; h.textContent=d; cg.appendChild(h); });
-    const fd = new Date(yr,mo-1,1).getDay();
+    dN.forEach(d => { const h=document.createElement('div'); h.className='cal-dow'; h.textContent=d; cg.appendChild(h); });
+    const fd = new Date(y, m-1, 1).getDay();
     for (let i=0;i<fd;i++) { const e=document.createElement('div'); e.className='cal-day empty'; cg.appendChild(e); }
-    const dim = new Date(yr,mo,0).getDate();
+    const dim = new Date(y, m, 0).getDate();
     for (let d=1;d<=dim;d++) {
-      const ds=`${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const cnt=md[ds]||0;
-      const el=document.createElement('div');
-      el.className=`cal-day ${cnt>0?'has-data':'no-data'}`;
+      const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cnt = md[ds] || 0;
+      const el = document.createElement('div');
+      el.className = `cal-day ${cnt>0?'has-data':'no-data'}`;
+      if (!hasData) el.style.opacity = '.25';
       if (selectedDate===ds) el.classList.add('selected');
-      el.style.background=cnt>0?calC(cnt,mx):'var(--h0)';
-      el.innerHTML=`<span>${d}</span>${cnt>0?`<span class="cal-count">${cnt}</span>`:''}`;
-      el.title=cnt>0?`${ds}: ${cnt} eventos`:ds;
-      if (cnt>0) el.addEventListener('click', ()=>{ selectedDate=selectedDate===ds?'ALL':ds; hidePopup(); render(); });
+      if (cnt>0) {
+        el.style.background = calC(cnt, mxVal);
+        el.innerHTML = `<span>${d}</span><span class="cal-count">${cnt}</span>`;
+        el.title = `${ds}: ${cnt} eventos`;
+        el.addEventListener('click', () => {
+          selectedDate = (selectedDate===ds) ? 'ALL' : ds;
+          hidePopup(); render();
+        });
+      } else {
+        el.style.background = 'var(--h0)';
+        el.innerHTML = `<span>${d}</span>`;
+      }
       cg.appendChild(el);
     }
     block.appendChild(cg); container.appendChild(block);
   });
 }
+
 
 // ── DRAG & DROP ──
 function toggleEditMode() {
@@ -961,6 +1010,134 @@ async function carregarDoSheets() {
         </div>
       </div>`;
   }
+}
+
+// ── RELATÓRIO ──
+function gerarRelatorio() {
+  const keys = getKeys();
+  const allDC = getDayCounts(keys);
+  const hourC = getHourCounts(keys);
+  const hourMax = Math.max(...hourC, 0);
+
+  // Aggregate groups
+  const groupTotals = {};
+  keys.forEach(k => {
+    const eq = currentData[k];
+    Object.entries(eq.groups || {}).forEach(([g, cnt]) => {
+      groupTotals[g] = (groupTotals[g] || 0) + cnt;
+    });
+  });
+
+  // Top hours
+  const topHours = hourC
+    .map((v, h) => ({ h, v }))
+    .filter(x => x.v > 0)
+    .sort((a, b) => b.v - a.v)
+    .slice(0, 10);
+
+  // Build report
+  const isAll = selectedISS === 'ALL';
+  const title = isAll ? 'Relatório Geral — Todos os Equipamentos' : (() => {
+    const eq = currentData[selectedISS];
+    return `Relatório — ${eq.nome || eq.selos} (SELO: ${eq.selos} | ISSI: ${selectedISS})`;
+  })();
+
+  const dateLabel = selectedDate !== 'ALL'
+    ? `Dia: ${selectedDate.split('-').reverse().join('/')}`
+    : `Período: ${Object.keys(allDC).sort()[0]?.split('-').reverse().join('/') || '—'} → ${Object.keys(allDC).sort().pop()?.split('-').reverse().join('/') || '—'}`;
+
+  const totalEvt = Object.values(allDC).reduce((s,v) => s+v, 0);
+  const diasAtivos = Object.values(allDC).filter(v=>v>0).length;
+
+  let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${title}</title>
+<style>
+  body{font-family:'Segoe UI',sans-serif;background:#0d0f14;color:#e2e8f0;padding:24px;max-width:900px;margin:0 auto;}
+  h1{font-size:1.1rem;color:#00c6ff;margin-bottom:4px;}
+  .sub{font-size:.75rem;color:#64748b;margin-bottom:20px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  .stat{background:#161a24;border:1px solid #2a3045;border-radius:8px;padding:12px 14px;text-align:center;}
+  .stat-n{font-size:1.6rem;font-weight:700;color:#00c6ff;font-family:'Courier New',monospace;}
+  .stat-l{font-size:.6rem;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+  h2{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:20px 0 8px;border-bottom:1px solid #2a3045;padding-bottom:6px;}
+  .hour-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px;}
+  .hour-box{background:#161a24;border:1px solid #2a3045;border-radius:6px;padding:8px 10px;text-align:center;}
+  .hour-box.peak{border-color:#f59e0b;background:rgba(245,158,11,.1);}
+  .hour-n{font-size:1.1rem;font-weight:700;color:#f59e0b;font-family:'Courier New',monospace;}
+  .hour-l{font-size:.6rem;color:#64748b;}
+  .group-row{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#161a24;border:1px solid #2a3045;border-radius:5px;margin-bottom:4px;}
+  .group-name{font-size:.72rem;color:#e2e8f0;}
+  .group-cnt{font-size:.72rem;color:#00c6ff;font-family:'Courier New',monospace;font-weight:700;}
+  .equip-table{width:100%;border-collapse:collapse;font-size:.7rem;}
+  .equip-table th{background:#1e2330;padding:6px 10px;text-align:left;color:#64748b;font-weight:600;text-transform:uppercase;font-size:.6rem;letter-spacing:.5px;}
+  .equip-table td{padding:5px 10px;border-bottom:1px solid #2a3045;}
+  .equip-table tr:hover td{background:#1e2330;}
+  .peak-hour{color:#f59e0b;font-weight:700;}
+  .footer{margin-top:24px;font-size:.62rem;color:#2a3045;text-align:center;}
+  @media print{body{background:#fff;color:#000;} .stat,.hour-box,.group-row{border-color:#ccc;background:#f9f9f9;} h1,.stat-n,.hour-n,.group-cnt{color:#0969da;} .equip-table th{background:#e8ecf0;color:#333;} }
+</style></head><body>
+<h1>${title}</h1>
+<div class="sub">${dateLabel} &nbsp;|&nbsp; Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n">${totalEvt.toLocaleString('pt-BR')}</div><div class="stat-l">Total Eventos</div></div>
+  <div class="stat"><div class="stat-n">${diasAtivos}</div><div class="stat-l">Dias Ativos</div></div>
+  <div class="stat"><div class="stat-n">${String(topHours[0]?.h ?? '—').padStart(2,'0')}h</div><div class="stat-l">Hora Pico</div></div>
+  <div class="stat"><div class="stat-n">${keys.length}</div><div class="stat-l">Equipamentos</div></div>
+</div>
+
+<h2>Top Horários de Maior Atividade</h2>
+<div class="hour-grid">
+  ${topHours.map((x, i) => `<div class="hour-box ${i===0?'peak':''}">
+    <div class="hour-n">${x.v}</div>
+    <div class="hour-l">${String(x.h).padStart(2,'0')}h</div>
+  </div>`).join('')}
+</div>`;
+
+  // Groups section
+  if (Object.keys(groupTotals).length) {
+    const sortedGroups = Object.entries(groupTotals).sort((a,b) => b[1]-a[1]);
+    html += `<h2>Distribuição por Grupo</h2>
+    ${sortedGroups.map(([g,cnt]) => `<div class="group-row">
+      <span class="group-name">${g}</span>
+      <span class="group-cnt">${cnt} eventos</span>
+    </div>`).join('')}`;
+  }
+
+  // Equipment breakdown (if ALL selected)
+  if (isAll) {
+    html += `<h2>Resumo por Equipamento</h2>
+    <table class="equip-table">
+      <thead><tr><th>SELO</th><th>Nome</th><th>ISSI</th><th>Total Eventos</th><th>Dias Ativos</th><th>Hora Pico</th></tr></thead>
+      <tbody>`;
+    keys
+      .map(k => {
+        const eq = currentData[k];
+        const eqDays = Object.values(eq.dayCounts).filter(v=>v>0).length;
+        const eqPeak = eq.hourCounts.indexOf(Math.max(...eq.hourCounts));
+        return { k, eq, total: eq.total, eqDays, eqPeak };
+      })
+      .sort((a,b) => b.total - a.total)
+      .forEach(({ k, eq, eqDays, eqPeak }) => {
+        html += `<tr>
+          <td>${eq.selos}</td>
+          <td>${eq.nome || '—'}</td>
+          <td style="font-family:'Courier New',monospace;font-size:.65rem">${k}</td>
+          <td>${eq.total.toLocaleString('pt-BR')}</td>
+          <td>${eqDays}</td>
+          <td class="peak-hour">${String(eqPeak).padStart(2,'0')}h</td>
+        </tr>`;
+      });
+    html += `</tbody></table>`;
+  }
+
+  html += `<div class="footer">Dashboard ISSIs DCX — Relatório automático</div></body></html>`;
+
+  // Open in new window
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
 }
 
 // ── INIT ──
