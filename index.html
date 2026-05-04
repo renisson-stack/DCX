@@ -989,8 +989,26 @@ function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';if(th
 function onDragLeave(){this.classList.remove('drag-over');}
 function onDrop(e){e.stopPropagation();if(dragSrc!==this){const main=document.getElementById('mainArea');const ch=[...main.children];const si=ch.indexOf(dragSrc),di=ch.indexOf(this);main.insertBefore(dragSrc,si<di?this.nextSibling:this);}this.classList.remove('drag-over');return false;}
 function onDragEnd(){this.classList.remove('dragging');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('drag-over'));}
-function saveLayout(){const main=document.getElementById('mainArea');const order=[...main.querySelectorAll('.panel')].map(p=>p.id).filter(Boolean);localStorage.setItem('dcx_layout2',JSON.stringify(order));}
-function restoreLayout(){try{const saved=JSON.parse(localStorage.getItem('dcx_layout2')||'[]');if(!saved.length)return;const main=document.getElementById('mainArea');saved.forEach(id=>{const el=document.getElementById(id);if(el)main.appendChild(el);});}catch(e){}}
+function saveLayout(){
+  const main = document.getElementById('mainArea');
+  const order = [...main.querySelectorAll('.panel')]
+    .map(p => p.id)
+    .filter(id => id && id !== 'panelCal' && id !== 'panelGroups');
+  localStorage.setItem('dcx_layout2', JSON.stringify(order));
+}
+function restoreLayout(){
+  // Only restore panelBar position - panelCal/panelGroups must stay in cal-groups-row
+  try {
+    const saved = JSON.parse(localStorage.getItem('dcx_layout2') || '[]');
+    if (!saved.length) return;
+    const main = document.getElementById('mainArea');
+    saved.forEach(id => {
+      if (id === 'panelCal' || id === 'panelGroups') return; // never move these
+      const el = document.getElementById(id);
+      if (el) main.appendChild(el);
+    });
+  } catch(e) {}
+}
 
 
 // ── CARREGAR DO SHEETS ──
@@ -1280,6 +1298,13 @@ function dbShowMsg(msg, color) {
 
 // ── INIT ──
 dbLoad();
+// Clear old layout if it contains panelCal (it would break the 50/50 layout)
+try {
+  const saved = JSON.parse(localStorage.getItem('dcx_layout2') || '[]');
+  if (saved.includes('panelCal') || saved.includes('panelGroups')) {
+    localStorage.removeItem('dcx_layout2');
+  }
+} catch(e) {}
 restoreLayout();
 carregarDoSheets();
 
